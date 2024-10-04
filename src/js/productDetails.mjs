@@ -4,39 +4,52 @@ import { findProductById } from './productData.mjs';
 // Variable to store product data
 let productData = {};
 
-// Function to fetch product details using findProductById from productData.mjs
-async function fetchProductData(productId) {
+export default async function productDetails(productId) {
     try {
-        productData = await findProductById(productId);
-        if (!productData) {
-            throw new Error('Product not found');
-        }
+      // Get product details and handle the promise using await
+      const product = await findProductById(productId);
+  
+      if (product) {
+        // Render the product details
+        renderProductDetails(product);
+  
+        // Add event listener to 'Add to Cart' button
+        document.getElementById('addToCart').addEventListener('click', () => addToCart(product));
+      } else {
+        console.error('Product not found!');
+      }
     } catch (error) {
-        console.error('Error fetching product data:', error);
+      console.error('Error fetching product details:', error);
     }
-}
-
-// Method to render product details into the HTML
-function renderProductDetails() {
-    if (!productData) {
-        console.error('Product data not loaded yet.');
-        return;
-    }
-    
-    const productNameElem = document.getElementById('product-name');
-    const productDescriptionElem = document.getElementById('product-description');
-    const productPriceElem = document.getElementById('product-price');
-    const productStockElem = document.getElementById('product-stock');
-    
-    if (productNameElem && productDescriptionElem && productPriceElem && productStockElem) {
-        productNameElem.textContent = productData.name;
-        productDescriptionElem.textContent = productData.description;
-        productPriceElem.textContent = `$${productData.price}`;
-        productStockElem.textContent = `${productData.stock} in stock`;
+  }
+  
+  function addToCart(product) {
+    // Save product to local storage
+    setLocalStorage('so-cart', product);
+  }
+  //Updates the DOM elements with product details.
+  function renderProductDetails(product) {
+    const productName = document.querySelector('#productName');
+    const productNameWithoutBrand = document.querySelector('#productNameWithoutBrand');
+    const productImage = document.querySelector('#productImage');
+    const productFinalPrice = document.querySelector('#productFinalPrice');
+    const productColorName = document.querySelector('#productColorName');
+    const productDescriptionHtmlSimple = document.querySelector('#productDescriptionHtmlSimple');
+    const addToCartButton = document.querySelector('#addToCart');
+  
+    if (productName && productNameWithoutBrand && productImage && productFinalPrice && productColorName && productDescriptionHtmlSimple && addToCartButton) {
+      productName.innerText = product.Brand.Name;
+      productNameWithoutBrand.innerText = product.NameWithoutBrand;
+      productImage.src = product.Image;
+      productImage.alt = product.Name;
+      productFinalPrice.innerText = product.FinalPrice;
+      productColorName.innerText = product.Colors[0].ColorName;
+      productDescriptionHtmlSimple.innerHTML = product.DescriptionHtmlSimple;
+      addToCartButton.dataset.id = product.Id;
     } else {
-        console.error('Some HTML elements for product details are missing.');
+      console.error('Some elements are missing in the DOM.');
     }
-}
+  }
 
 // Function to add the product to the cart
 function addProductToCart(product) {
@@ -48,17 +61,6 @@ async function addToCartHandler(e) {
     const productId = e.target.dataset.id || getParam('product'); 
     const product = await findProductById(productId);
     addProductToCart(product);
-}
-
-// Entry point for the module, ensures product data is fetched and rendered
-export default async function productDetails(productId) {
-    await fetchProductData(productId);
-    renderProductDetails();
-
-    // Add listener to Add to Cart button
-    document
-        .getElementById('addToCart')
-        .addEventListener('click', addToCartHandler);
 }
 
 // Expose only the necessary functions
